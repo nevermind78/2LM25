@@ -73,7 +73,7 @@ for col in numeric_columns:
 
 # Titre de l'application
 st.title("NOTES DS Probabilité")
-st.header("2LM A.U 2024-2025")
+st.header("2LM A.U 2025-2026")
 
 def categorize_notes(note):
     try:
