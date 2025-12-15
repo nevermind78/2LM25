@@ -180,95 +180,103 @@ email = st.text_input(
     help="Veuillez entrer l'email exact utilisé pour l'inscription"
 )
 
-if email:
-    email = email.strip().lower()
-    
-    if 'Email' in df.columns:
-        mask = df["Email"] == email
-        if mask.any():
-            # Récupération des données de l'étudiant
-            etudiant = df[mask].iloc[0]
-            
-            # Affichage des résultats
-            st.markdown('<div class="student-data">', unsafe_allow_html=True)
-            
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                st.metric("👤 Nom", etudiant.get("Name", "Non disponible"))
-            
-            with col2:
-                st.metric("👥 Groupe", etudiant.get("GR", "Non disponible"))
-            
-            with col3:
-                ds_value = etudiant.get("DS", "Non disponible")
-                if isinstance(ds_value, (int, float)):
-                    st.metric("📝 Note DS", f"{ds_value:.2f}/20")
-                else:
-                    st.metric("📝 Note DS", str(ds_value))
-            
-            # Deuxième ligne avec seulement la note TP
-            col4, col5, col6 = st.columns(3)
-            
-            with col4:
-                tp_value = etudiant.get("TP", "Non disponible")
-                if isinstance(tp_value, (int, float)):
-                    st.metric("💻 Note TP", f"{tp_value:.2f}/20")
-                else:
-                    st.metric("💻 Note TP", str(tp_value))
-            
-            # Les colonnes 5 et 6 restent vides pour garder l'alignement
-            with col5:
-                st.metric("", "")  # Colonne vide
-            
-            with col6:
-                st.metric("", "")  # Colonne vide
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Message d'alerte pour les absents
-            if etudiant.get("DS") == -1:
-                st.markdown("""
-                    <div class="alert-warning">
-                    ⚠️ <strong>Note : -1</strong><br>
-                    Vous étiez absent au DS. Si vous ne régularisez pas votre situation, 
-                    la note finale du DS sera de 0.
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            # Graphique des notes de l'étudiant (uniquement DS et TP)
-            if isinstance(ds_value, (int, float)) and isinstance(tp_value, (int, float)):
-                fig_indiv = go.Figure(data=[
-                    go.Bar(
-                        name='Vos notes',
-                        x=['DS', 'TP'],
-                        y=[ds_value, tp_value],
-                        marker_color=['#3B82F6', '#10B981'],
-                        text=[f"{ds_value:.2f}", f"{tp_value:.2f}"],
-                        textposition='auto'
-                    )
-                ])
-                
-                fig_indiv.update_layout(
-                    title="📈 Vos notes détaillées",
-                    yaxis_title="Note /20",
-                    yaxis_range=[0, 20],
-                    showlegend=False,
-                    height=400
-                )
-                
-                st.plotly_chart(fig_indiv, use_container_width=True)
+if 'Email' in df.columns:
+    mask = df["Email"] == email
+    if mask.any():
+        # Récupération des données de l'étudiant
+        etudiant = df[mask].iloc[0]
         
-        else:
+        # Affichage des résultats
+        st.markdown('<div class="student-data">', unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("👤 Nom", etudiant.get("Name", "Non disponible"))
+        
+        with col2:
+            st.metric("👥 Groupe", etudiant.get("GR", "Non disponible"))
+        
+        with col3:
+            ds_value = etudiant.get("DS", "Non disponible")
+            if isinstance(ds_value, (int, float)):
+                st.metric("📝 Note DS", f"{ds_value:.2f}/20")
+            else:
+                st.metric("📝 Note DS", str(ds_value))
+        
+        # Deuxième ligne avec seulement la note TP
+        col4, col5, col6 = st.columns(3)
+        
+        with col4:
+            tp_value = etudiant.get("TP", "Non disponible")
+            if isinstance(tp_value, (int, float)):
+                st.metric("💻 Note TP", f"{tp_value:.2f}/20")
+            else:
+                st.metric("💻 Note TP", str(tp_value))
+        
+        # Les colonnes 5 et 6 restent vides pour garder l'alignement
+        with col5:
+            st.metric("", "")  # Colonne vide
+        
+        with col6:
+            st.metric("", "")  # Colonne vide
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Message d'alerte pour les absents
+        if etudiant.get("DS") == -1:
             st.markdown("""
-                <div class="alert-error">
-                ❌ <strong>Email non trouvé</strong><br>
-                Vérifiez que vous avez entré l'adresse email exacte utilisée lors de l'inscription.
+                <div class="alert-warning">
+                ⚠️ <strong>Note : -1</strong><br>
+                Vous étiez absent au DS. Si vous ne régularisez pas votre situation, 
+                la note finale du DS sera de 0.
                 </div>
             """, unsafe_allow_html=True)
+        
+        # Graphique des notes de l'étudiant (uniquement DS et TP)
+        if isinstance(ds_value, (int, float)) and isinstance(tp_value, (int, float)):
+            fig_indiv = go.Figure(data=[
+                go.Bar(
+                    name='Vos notes',
+                    x=['DS', 'TP'],
+                    y=[ds_value, tp_value],
+                    marker_color=['#3B82F6', '#10B981'],
+                    text=[f"{ds_value:.2f}", f"{tp_value:.2f}"],
+                    textposition='auto'
+                )
+            ])
+            
+            fig_indiv.update_layout(
+                title="📈 Vos notes détaillées",
+                yaxis_title="Note /20",
+                yaxis_range=[0, 20],
+                showlegend=False,
+                height=400
+            )
+            
+            st.plotly_chart(fig_indiv, use_container_width=True)
+            
+            # Ajout de l'estimation de moyenne
+            st.markdown("---")
+            st.subheader("📊 Estimation de votre moyenne finale")
+            
+            # Vérification que les notes sont valides pour le calcul
+            if ds_value >= 0 and tp_value >= 0:
+                estimation = predict_moyenne_prob(tp_value, ds_value)
+                st.info(estimation)
+            else:
+                st.warning("⚠️ Impossible de calculer l'estimation avec des notes négatives")
     
     else:
-        st.error("Erreur : Colonne 'Email' non trouvée dans les données.")
+        st.markdown("""
+            <div class="alert-error">
+            ❌ <strong>Email non trouvé</strong><br>
+            Vérifiez que vous avez entré l'adresse email exacte utilisée lors de l'inscription.
+            </div>
+        """, unsafe_allow_html=True)
+
+else:
+    st.error("Erreur : Colonne 'Email' non trouvée dans les données.")
 
 # Section 2: Statistiques par groupe
 st.markdown('<h3 class="sub-title">📊 Statistiques par groupe</h3>', unsafe_allow_html=True)
