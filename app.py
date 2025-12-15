@@ -179,7 +179,17 @@ email = st.text_input(
     placeholder="exemple@etudiant.univ-tln.fr",
     help="Veuillez entrer l'email exact utilisé pour l'inscription"
 )
-
+# Définir la fonction d'estimation AVANT de l'utiliser
+def predict_moyenne_prob(tp, ds):
+    # Calcul de la note nécessaire à l'examen pour avoir 10 de moyenne
+    # Formule: 0.1*tp + 0.2*ds + 0.7*examen = 10
+    # Donc: examen = (10 - 0.1*tp - 0.2*ds) / 0.7
+    m = (10 - 0.1*tp - 0.2*ds) / 0.7
+    
+    # Estimation de la moyenne prévue (avec ds-3 comme note d'examen hypothétique)
+    moyenne_estimee = tp*0.1 + ds*0.2 + (ds-3)*0.7
+    
+    return f"La moyenne prévue est à peu près {moyenne_estimee:.2f}/20 ± 0.5\n\nVous devez avoir {m:.2f}/20 à l'examen pour avoir la moyenne (10/20)"
 if 'Email' in df.columns:
     mask = df["Email"] == email
     if mask.any():
