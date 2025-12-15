@@ -97,7 +97,7 @@ st.markdown("""
 
 # Titre principal avec HTML
 st.markdown('<h1 class="main-title">📊 NOTES DS Probabilité</h1>', unsafe_allow_html=True)
-st.markdown('<h2 class="main-title" style="font-size: 1.5rem;">2LM - Année Universitaire 2024-2025</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="main-title" style="font-size: 1.5rem;">2LM - Année Universitaire 2025-2026</h2>', unsafe_allow_html=True)
 csv_file_path = st.secrets['csv_file_path']
 # Fonction pour charger les données
 @st.cache_data
@@ -418,7 +418,7 @@ with st.expander("📈 Cliquez pour voir les statistiques détaillées par group
 st.markdown("---")
 st.markdown("""
     <div style="text-align: center; color: #6B7280; font-size: 0.9rem;">
-    <p>📚 <strong>Module de Probabilité - 2LM</strong> | Année Universitaire 2024-2025</p>
-    <p>⚠️ Les notes sont susceptibles d'être modifiées après délibération du jury</p>
+    <p>📚 <strong>Module de Probabilité - 2LM</strong> | Année Universitaire 2025-2026</p>
+    
     </div>
 """, unsafe_allow_html=True)
