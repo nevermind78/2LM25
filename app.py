@@ -98,13 +98,13 @@ st.markdown("""
 # Titre principal avec HTML
 st.markdown('<h1 class="main-title">📊 NOTES DS Probabilité</h1>', unsafe_allow_html=True)
 st.markdown('<h2 class="main-title" style="font-size: 1.5rem;">2LM - Année Universitaire 2024-2025</h2>', unsafe_allow_html=True)
-
+csv_file_path = st.secrets['csv_file_path']
 # Fonction pour charger les données
 @st.cache_data
 def load_data():
     try:
         # Chargement du fichier CSV
-        df = pd.read_csv("2lm2526.csv", delimiter=";", encoding='utf-8')
+        df = pd.read_csv(csv_file_path, delimiter=";", encoding='utf-8')
         
         # Nettoyer les noms de colonnes
         df.columns = df.columns.str.strip()
