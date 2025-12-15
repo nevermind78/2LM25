@@ -174,7 +174,7 @@ st.markdown('<h3 class="sub-title">🔍 Recherche de vos notes</h3>', unsafe_all
 
 # Champ de saisie email
 email = st.text_input(
-    "Entrez votre adresse email universitaire :",
+    "Entrez votre adresse email utilisée pour Datacamp :",
     key="email_input",
     placeholder="exemple@etudiant.univ-tln.fr",
     help="Veuillez entrer l'email exact utilisé pour l'inscription"
@@ -207,6 +207,7 @@ if email:
                 else:
                     st.metric("📝 Note DS", str(ds_value))
             
+            # Deuxième ligne avec seulement la note TP
             col4, col5, col6 = st.columns(3)
             
             with col4:
@@ -216,25 +217,12 @@ if email:
                 else:
                     st.metric("💻 Note TP", str(tp_value))
             
+            # Les colonnes 5 et 6 restent vides pour garder l'alignement
             with col5:
-                tpex_value = etudiant.get("TPEX", "Non disponible")
-                if isinstance(tpex_value, (int, float)):
-                    st.metric("📊 Note TPEX", f"{tpex_value:.2f}/20")
-                else:
-                    st.metric("📊 Note TPEX", str(tpex_value))
+                st.metric("", "")  # Colonne vide
             
             with col6:
-                # Calcul de la moyenne si toutes les notes sont disponibles
-                notes = []
-                for col in ['DS', 'TP', 'TPEX']:
-                    if col in etudiant and isinstance(etudiant[col], (int, float)):
-                        notes.append(etudiant[col])
-                
-                if notes:
-                    moyenne = sum(notes) / len(notes)
-                    st.metric("🎯 Moyenne", f"{moyenne:.2f}/20")
-                else:
-                    st.metric("🎯 Moyenne", "Non calculable")
+                st.metric("", "")  # Colonne vide
             
             st.markdown('</div>', unsafe_allow_html=True)
             
@@ -248,14 +236,16 @@ if email:
                     </div>
                 """, unsafe_allow_html=True)
             
-            # Graphique des notes de l'étudiant
+            # Graphique des notes de l'étudiant (uniquement DS et TP)
             if isinstance(ds_value, (int, float)) and isinstance(tp_value, (int, float)):
                 fig_indiv = go.Figure(data=[
                     go.Bar(
                         name='Vos notes',
-                        x=['DS', 'TP', 'TPEX'],
-                        y=[ds_value, tp_value, tpex_value if isinstance(tpex_value, (int, float)) else 0],
-                        marker_color=['#3B82F6', '#10B981', '#8B5CF6']
+                        x=['DS', 'TP'],
+                        y=[ds_value, tp_value],
+                        marker_color=['#3B82F6', '#10B981'],
+                        text=[f"{ds_value:.2f}", f"{tp_value:.2f}"],
+                        textposition='auto'
                     )
                 ])
                 
@@ -304,6 +294,8 @@ with st.expander("📈 Cliquez pour voir les statistiques détaillées par group
                     ds_notes = pd.to_numeric(df_groupe["DS"], errors='coerce').dropna()
                     
                     if len(ds_notes) > 0:
+                        st.subheader(f"📝 Statistiques DS - Groupe {groupe_selectionne}")
+                        
                         # Métriques DS
                         col1, col2, col3, col4 = st.columns(4)
                         
@@ -327,7 +319,7 @@ with st.expander("📈 Cliquez pour voir les statistiques détaillées par group
                             fig_hist_ds = px.histogram(
                                 ds_notes,
                                 nbins=10,
-                                title=f"Distribution des notes DS - Groupe {groupe_selectionne}",
+                                title=f"Distribution des notes DS",
                                 labels={'value': 'Note DS', 'count': 'Nombre d\'étudiants'},
                                 color_discrete_sequence=['#3B82F6']
                             )
@@ -338,7 +330,7 @@ with st.expander("📈 Cliquez pour voir les statistiques détaillées par group
                             # Boxplot DS
                             fig_box_ds = px.box(
                                 ds_notes,
-                                title=f"Boxplot des notes DS - Groupe {groupe_selectionne}",
+                                title=f"Boxplot des notes DS",
                                 labels={'value': 'Note DS'}
                             )
                             st.plotly_chart(fig_box_ds, use_container_width=True)
@@ -359,7 +351,7 @@ with st.expander("📈 Cliquez pour voir les statistiques détaillées par group
                     
                     if len(tp_notes) > 0:
                         st.markdown("---")
-                        st.subheader(f"📊 Statistiques TP - Groupe {groupe_selectionne}")
+                        st.subheader(f"💻 Statistiques TP - Groupe {groupe_selectionne}")
                         
                         # Métriques TP
                         col5, col6, col7, col8 = st.columns(4)
@@ -419,6 +411,5 @@ st.markdown("---")
 st.markdown("""
     <div style="text-align: center; color: #6B7280; font-size: 0.9rem;">
     <p>📚 <strong>Module de Probabilité - 2LM</strong> | Année Universitaire 2025-2026</p>
-    
     </div>
 """, unsafe_allow_html=True)
