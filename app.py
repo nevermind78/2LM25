@@ -1,80 +1,147 @@
 import streamlit as st
 import pandas as pd
-import os 
 import plotly.express as px
+import plotly.graph_objects as go
 
-st.set_page_config(page_title="Notes 2LM", page_icon=":bar_chart:", layout="wide")
+# Configuration de la page
+st.set_page_config(
+    page_title="Notes 2LM - Probabilité",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# CSS pour cacher l'icône de GitHub et la barre latérale
-st.markdown(
-    """
+# CSS pour masquer les éléments inutiles et styliser l'application
+st.markdown("""
     <style>
-    .stApp .main-header a {
-        display: none !important;
-    }
+    /* Masquer le menu, footer et header par défaut */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
-    /* Masquer la barre latérale */
+    /* Masquer complètement la barre latérale */
     section[data-testid="stSidebar"] {
         display: none !important;
     }
     
-    /* Ajuster la largeur du contenu principal */
+    /* Style pour le titre principal */
+    .main-title {
+        text-align: center;
+        color: #1E3A8A;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    
+    /* Style pour les sous-titres */
+    .sub-title {
+        color: #374151;
+        border-bottom: 2px solid #3B82F6;
+        padding-bottom: 10px;
+        margin-top: 30px;
+    }
+    
+    /* Style pour les cartes de statistiques */
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Style pour le champ de saisie email */
+    .email-input {
+        font-size: 18px !important;
+        padding: 15px !important;
+        border-radius: 10px !important;
+        border: 2px solid #3B82F6 !important;
+    }
+    
+    /* Style pour les messages d'alerte */
+    .alert-warning {
+        background-color: #FEF3C7;
+        border-left: 4px solid #F59E0B;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+    }
+    
+    .alert-error {
+        background-color: #FEE2E2;
+        border-left: 4px solid #EF4444;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+    }
+    
+    /* Style pour les données étudiant */
+    .student-data {
+        background-color: #F3F4F6;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Ajustements généraux */
     .block-container {
-        padding-top: 2rem;
-        max-width: 100% !important;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    h1, h2, h3 {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
-csv_file_path = st.secrets['csv_file_path']
-#csv_file_path = "2lm2526.csv"
+# Titre principal avec HTML
+st.markdown('<h1 class="main-title">📊 NOTES DS Probabilité</h1>', unsafe_allow_html=True)
+st.markdown('<h2 class="main-title" style="font-size: 1.5rem;">2LM - Année Universitaire 2024-2025</h2>', unsafe_allow_html=True)
 
-# Fonction pour convertir les nombres avec virgule en float
-def convert_comma_to_float(value):
-    if isinstance(value, str):
-        # Remplace la virgule par un point et convertit en float
-        value = value.replace(',', '.')
-        try:
-            return float(value)
-        except ValueError:
-            return None
-    return value
+# Fonction pour charger les données
+@st.cache_data
+def load_data():
+    try:
+        # Chargement du fichier CSV
+        df = pd.read_csv("2lm2526.csv", delimiter=";", encoding='utf-8')
+        
+        # Nettoyer les noms de colonnes
+        df.columns = df.columns.str.strip()
+        
+        # Nettoyer les emails
+        if 'Email' in df.columns:
+            df["Email"] = df["Email"].astype(str).str.strip().str.lower()
+        
+        # Fonction pour convertir les nombres avec virgule
+        def convert_comma_to_float(value):
+            if isinstance(value, str):
+                value = value.replace(',', '.').strip()
+                try:
+                    return float(value) if value else None
+                except ValueError:
+                    return None
+            return value
+        
+        # Convertir les colonnes numériques
+        numeric_columns = ['DS', 'TP', 'TPEX', 'D', 'B']
+        for col in numeric_columns:
+            if col in df.columns:
+                df[col] = df[col].apply(convert_comma_to_float)
+        
+        return df
+    
+    except Exception as e:
+        st.error(f"Erreur lors du chargement des données : {str(e)}")
+        return None
 
-# Chargement du fichier CSV avec le séparateur point-virgule
-try:
-    df = pd.read_csv(csv_file_path, delimiter=";", encoding='utf-8')
-except Exception as e:
-    st.error(f"Erreur lors du chargement du fichier CSV: {e}")
+# Chargement des données
+df = load_data()
+
+if df is None:
     st.stop()
 
-# Nettoyer les noms de colonnes
-df.columns = df.columns.str.strip()
-
-# Nettoyer les emails
-if 'Email' in df.columns:
-    df["Email"] = df["Email"].astype(str).str.strip().str.lower()
-
-# Convertir les colonnes numériques (remplacer les virgules par des points)
-numeric_columns = ['DS', 'TP', 'TPEX', 'D', 'B']
-for col in numeric_columns:
-    if col in df.columns:
-        df[col] = df[col].apply(convert_comma_to_float)
-
-# Titre de l'application
-st.title("NOTES DS Probabilité")
-st.header("2LM A.U 2025-2026")
-
+# Fonction pour catégoriser les notes
 def categorize_notes(note):
     try:
         if pd.isna(note):
@@ -93,185 +160,265 @@ def categorize_notes(note):
     except:
         return "Non défini"
 
-# Vérification si les colonnes existent et conversion en numérique
+# Préparation des données
 if 'DS' in df.columns:
     df["DS"] = pd.to_numeric(df["DS"], errors='coerce')
-    df["Catégorie de notes DS"] = df["DS"].apply(categorize_notes)
+    df["Catégorie_DS"] = df["DS"].apply(categorize_notes)
 
 if 'TP' in df.columns:
     df["TP"] = pd.to_numeric(df["TP"], errors='coerce')
-    df["Catégorie de notes TP"] = df["TP"].apply(categorize_notes)
+    df["Catégorie_TP"] = df["TP"].apply(categorize_notes)
 
-# CSS pour personnaliser la taille de la police
-st.markdown(
-    """
-    <style>
-    .custom-text-input label {
-        font-size: 28px !important;
-        font-weight: bold;
-    }
-    input[data-testid="stTextInput"] {
-        font-size: 20px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True
-)
+# Section 1: Recherche par email
+st.markdown('<h3 class="sub-title">🔍 Recherche de vos notes</h3>', unsafe_allow_html=True)
 
-# Champ de saisie pour l'email de l'étudiant avec une classe personnalisée
-email = st.text_input("Saisissez votre email", key="email_input", 
-                     label_visibility="visible", 
-                     placeholder="Exemple: nom@example.com")
-
-# Appliquer la classe personnalisée via JavaScript
-st.markdown(
-    """
-    <script>
-    const inputElement = document.querySelector('input[data-testid="stTextInput"]');
-    if (inputElement) {
-        inputElement.parentElement.classList.add('custom-text-input');
-    }
-    </script>
-    """, unsafe_allow_html=True
+# Champ de saisie email
+email = st.text_input(
+    "Entrez votre adresse email universitaire :",
+    key="email_input",
+    placeholder="exemple@etudiant.univ-tln.fr",
+    help="Veuillez entrer l'email exact utilisé pour l'inscription"
 )
 
 if email:
     email = email.strip().lower()
     
     if 'Email' in df.columns:
-        # Chercher l'email dans la colonne
         mask = df["Email"] == email
         if mask.any():
-            # Récupération des informations de l'étudiant correspondant à l'email
+            # Récupération des données de l'étudiant
             etudiant = df[mask].iloc[0]
-            nom = etudiant["Name"] if 'Name' in df.columns else "Non disponible"
-            groupe = etudiant["GR"] if 'GR' in df.columns else "Non disponible"
-            noteDS = etudiant["DS"] if 'DS' in df.columns else "Non disponible"
-            noteTP = etudiant["TP"] if 'TP' in df.columns else "Non disponible"
             
-            # Création d'un dictionnaire contenant les informations de l'étudiant
-            etudiant_info = {
-                "Nom": str(nom),
-                "Groupe": str(groupe),
-                "DS": f"{noteDS:.2f}" if isinstance(noteDS, (int, float)) else str(noteDS),
-                "TP": f"{noteTP:.2f}" if isinstance(noteTP, (int, float)) else str(noteTP),
-            }
+            # Affichage des résultats
+            st.markdown('<div class="student-data">', unsafe_allow_html=True)
             
-            res = pd.DataFrame.from_dict(etudiant_info, orient='index', columns=['Résultats'])
+            col1, col2, col3 = st.columns(3)
             
-            # Affichage des informations de l'étudiant dans un tableau
-            st.subheader("Résultats de l'étudiant")
-            a, b, c = st.columns([1, 2, 1])
-            with b:
-                st.dataframe(res, use_container_width=True)
+            with col1:
+                st.metric("👤 Nom", etudiant.get("Name", "Non disponible"))
+            
+            with col2:
+                st.metric("👥 Groupe", etudiant.get("GR", "Non disponible"))
+            
+            with col3:
+                ds_value = etudiant.get("DS", "Non disponible")
+                if isinstance(ds_value, (int, float)):
+                    st.metric("📝 Note DS", f"{ds_value:.2f}/20")
+                else:
+                    st.metric("📝 Note DS", str(ds_value))
+            
+            col4, col5, col6 = st.columns(3)
+            
+            with col4:
+                tp_value = etudiant.get("TP", "Non disponible")
+                if isinstance(tp_value, (int, float)):
+                    st.metric("💻 Note TP", f"{tp_value:.2f}/20")
+                else:
+                    st.metric("💻 Note TP", str(tp_value))
+            
+            with col5:
+                tpex_value = etudiant.get("TPEX", "Non disponible")
+                if isinstance(tpex_value, (int, float)):
+                    st.metric("📊 Note TPEX", f"{tpex_value:.2f}/20")
+                else:
+                    st.metric("📊 Note TPEX", str(tpex_value))
+            
+            with col6:
+                # Calcul de la moyenne si toutes les notes sont disponibles
+                notes = []
+                for col in ['DS', 'TP', 'TPEX']:
+                    if col in etudiant and isinstance(etudiant[col], (int, float)):
+                        notes.append(etudiant[col])
                 
-            if noteDS == -1:
-                st.warning("-1 : absent au DS. Si vous ne réglez pas votre situation, la note finale au DS sera 0")
-        else:
-            st.error("Email non trouvé dans la base de données")
-    else:
-        st.error("Colonne 'Email' non trouvée dans le fichier CSV")
-
-# Bloc avec la possibilité de cacher/afficher les statistiques des groupes
-with st.expander("Afficher/Masquer les statistiques des groupes"):
-    if 'GR' in df.columns:
-        # Champ de sélection pour choisir un groupe
-        groupes = df["GR"].dropna().unique()
-        groupes = [str(g).strip() for g in groupes]
-        groupes = sorted([g for g in groupes if g and str(g) != 'nan'])
+                if notes:
+                    moyenne = sum(notes) / len(notes)
+                    st.metric("🎯 Moyenne", f"{moyenne:.2f}/20")
+                else:
+                    st.metric("🎯 Moyenne", "Non calculable")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Message d'alerte pour les absents
+            if etudiant.get("DS") == -1:
+                st.markdown("""
+                    <div class="alert-warning">
+                    ⚠️ <strong>Note : -1</strong><br>
+                    Vous étiez absent au DS. Si vous ne régularisez pas votre situation, 
+                    la note finale du DS sera de 0.
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            # Graphique des notes de l'étudiant
+            if isinstance(ds_value, (int, float)) and isinstance(tp_value, (int, float)):
+                fig_indiv = go.Figure(data=[
+                    go.Bar(
+                        name='Vos notes',
+                        x=['DS', 'TP', 'TPEX'],
+                        y=[ds_value, tp_value, tpex_value if isinstance(tpex_value, (int, float)) else 0],
+                        marker_color=['#3B82F6', '#10B981', '#8B5CF6']
+                    )
+                ])
+                
+                fig_indiv.update_layout(
+                    title="📈 Vos notes détaillées",
+                    yaxis_title="Note /20",
+                    yaxis_range=[0, 20],
+                    showlegend=False,
+                    height=400
+                )
+                
+                st.plotly_chart(fig_indiv, use_container_width=True)
         
-        if len(groupes) > 0:
-            groupe_selectionne = st.selectbox("Choisissez un groupe", options=groupes)
+        else:
+            st.markdown("""
+                <div class="alert-error">
+                ❌ <strong>Email non trouvé</strong><br>
+                Vérifiez que vous avez entré l'adresse email exacte utilisée lors de l'inscription.
+                </div>
+            """, unsafe_allow_html=True)
+    
+    else:
+        st.error("Erreur : Colonne 'Email' non trouvée dans les données.")
 
+# Section 2: Statistiques par groupe
+st.markdown('<h3 class="sub-title">📊 Statistiques par groupe</h3>', unsafe_allow_html=True)
+
+with st.expander("📈 Cliquez pour voir les statistiques détaillées par groupe", expanded=False):
+    if 'GR' in df.columns:
+        # Sélection du groupe
+        groupes = sorted([str(g).strip() for g in df["GR"].dropna().unique() if str(g).strip()])
+        
+        if groupes:
+            groupe_selectionne = st.selectbox(
+                "Sélectionnez un groupe :",
+                options=groupes,
+                key="groupe_select"
+            )
+            
             if groupe_selectionne:
-                # Filtrer les données pour le groupe sélectionné
+                # Filtrage des données
                 df_groupe = df[df["GR"].astype(str).str.strip() == groupe_selectionne].copy()
                 
-                # Vérifier si la colonne DS existe et contient des données numériques
+                # Statistiques DS
                 if 'DS' in df_groupe.columns:
-                    # Convertir en numérique si ce n'est pas déjà fait
-                    df_groupe["DS"] = pd.to_numeric(df_groupe["DS"], errors='coerce')
+                    ds_notes = pd.to_numeric(df_groupe["DS"], errors='coerce').dropna()
                     
-                    # Filtrer les valeurs NaN
-                    df_groupe_ds = df_groupe.dropna(subset=['DS'])
-                    
-                    if len(df_groupe_ds) > 0:
-                        # Statistiques du groupe
-                        moyenne = df_groupe_ds["DS"].mean()
-                        variance = df_groupe_ds["DS"].var()
-                        ecart_type = df_groupe_ds["DS"].std()
-
-                        # Affichage des statistiques
-                        col1, col2 = st.columns(2)
+                    if len(ds_notes) > 0:
+                        # Métriques DS
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        with col1:
+                            st.metric("Moyenne DS", f"{ds_notes.mean():.2f}")
                         
                         with col2:
-                            # Boxplot
-                            fig_box = px.box(df_groupe_ds, y="DS", points="all", 
-                                            title=f"Boxplot des notes DS - Groupe {groupe_selectionne}",
-                                            labels={"DS": "Note DS"})
-                            st.plotly_chart(fig_box, use_container_width=True)
-                            
-                            st.metric("Moyenne", f"{moyenne:.2f}")
-                            st.metric("Variance", f"{variance:.2f}")
-                            st.metric("Écart-type", f"{ecart_type:.2f}")
-
-                        # Graphiques
-                        with col1:
-                            # Pie chart des catégories
-                            if 'Catégorie de notes DS' in df_groupe_ds.columns:
-                                fig_pie = px.pie(df_groupe_ds, names="Catégorie de notes DS", 
-                                               title=f"Répartition des catégories - Groupe {groupe_selectionne}")
-                                st.plotly_chart(fig_pie, use_container_width=True)
-                            
-                            # Histogramme
-                            fig_hist = px.histogram(
-                                df_groupe_ds,
-                                x="DS",
+                            st.metric("Médiane DS", f"{ds_notes.median():.2f}")
+                        
+                        with col3:
+                            st.metric("Écart-type DS", f"{ds_notes.std():.2f}")
+                        
+                        with col4:
+                            st.metric("Effectif", len(ds_notes))
+                        
+                        # Graphiques DS
+                        col_graph1, col_graph2 = st.columns(2)
+                        
+                        with col_graph1:
+                            # Histogramme DS
+                            fig_hist_ds = px.histogram(
+                                ds_notes,
                                 nbins=10,
-                                title=f"Histogramme des notes DS - Groupe {groupe_selectionne}",
-                                labels={"DS": "Notes DS"},
-                                color_discrete_sequence=["#636EFA"],
+                                title=f"Distribution des notes DS - Groupe {groupe_selectionne}",
+                                labels={'value': 'Note DS', 'count': 'Nombre d\'étudiants'},
+                                color_discrete_sequence=['#3B82F6']
                             )
-                            fig_hist.update_layout(bargap=0.2)
-                            st.plotly_chart(fig_hist, use_container_width=True)
-                            
-                        # Section pour les statistiques du TP si la colonne existe
-                        if 'TP' in df_groupe.columns:
-                            st.subheader(f"Statistiques des notes TP - Groupe {groupe_selectionne}")
-                            
-                            # Convertir les notes TP en numérique
-                            df_groupe["TP"] = pd.to_numeric(df_groupe["TP"], errors='coerce')
-                            df_groupe_tp = df_groupe.dropna(subset=['TP'])
-                            
-                            if len(df_groupe_tp) > 0:
-                                col3, col4 = st.columns(2)
-                                
-                                with col3:
-                                    # Boxplot TP
-                                    fig_box_tp = px.box(df_groupe_tp, y="TP", points="all", 
-                                                       title=f"Boxplot des notes TP",
-                                                       labels={"TP": "Note TP"})
-                                    st.plotly_chart(fig_box_tp, use_container_width=True)
-                                
-                                with col4:
-                                    # Pie chart TP
-                                    if 'Catégorie de notes TP' in df_groupe_tp.columns:
-                                        fig_pie_tp = px.pie(df_groupe_tp, names="Catégorie de notes TP", 
-                                                          title=f"Répartition des catégories TP")
-                                        st.plotly_chart(fig_pie_tp, use_container_width=True)
-                                    
-                                    # Statistiques TP
-                                    moyenne_tp = df_groupe_tp["TP"].mean()
-                                    variance_tp = df_groupe_tp["TP"].var()
-                                    ecart_type_tp = df_groupe_tp["TP"].std()
-                                    
-                                    st.metric("Moyenne TP", f"{moyenne_tp:.2f}")
-                                    st.metric("Variance TP", f"{variance_tp:.2f}")
-                                    st.metric("Écart-type TP", f"{ecart_type_tp:.2f}")
-                    else:
-                        st.warning(f"Aucune donnée de notes DS disponible pour le groupe {groupe_selectionne}")
-                else:
-                    st.warning(f"Colonne 'DS' non trouvée pour le groupe {groupe_selectionne}")
+                            fig_hist_ds.update_layout(bargap=0.1)
+                            st.plotly_chart(fig_hist_ds, use_container_width=True)
+                        
+                        with col_graph2:
+                            # Boxplot DS
+                            fig_box_ds = px.box(
+                                ds_notes,
+                                title=f"Boxplot des notes DS - Groupe {groupe_selectionne}",
+                                labels={'value': 'Note DS'}
+                            )
+                            st.plotly_chart(fig_box_ds, use_container_width=True)
+                        
+                        # Pie chart des catégories DS
+                        if 'Catégorie_DS' in df_groupe.columns:
+                            fig_pie_ds = px.pie(
+                                df_groupe,
+                                names='Catégorie_DS',
+                                title=f"Répartition par catégorie - DS",
+                                color_discrete_sequence=px.colors.sequential.RdBu
+                            )
+                            st.plotly_chart(fig_pie_ds, use_container_width=True)
+                
+                # Statistiques TP
+                if 'TP' in df_groupe.columns:
+                    tp_notes = pd.to_numeric(df_groupe["TP"], errors='coerce').dropna()
+                    
+                    if len(tp_notes) > 0:
+                        st.markdown("---")
+                        st.subheader(f"📊 Statistiques TP - Groupe {groupe_selectionne}")
+                        
+                        # Métriques TP
+                        col5, col6, col7, col8 = st.columns(4)
+                        
+                        with col5:
+                            st.metric("Moyenne TP", f"{tp_notes.mean():.2f}")
+                        
+                        with col6:
+                            st.metric("Médiane TP", f"{tp_notes.median():.2f}")
+                        
+                        with col7:
+                            st.metric("Écart-type TP", f"{tp_notes.std():.2f}")
+                        
+                        with col8:
+                            st.metric("Effectif TP", len(tp_notes))
+                        
+                        # Graphiques TP
+                        col_graph3, col_graph4 = st.columns(2)
+                        
+                        with col_graph3:
+                            # Histogramme TP
+                            fig_hist_tp = px.histogram(
+                                tp_notes,
+                                nbins=10,
+                                title=f"Distribution des notes TP",
+                                labels={'value': 'Note TP', 'count': 'Nombre d\'étudiants'},
+                                color_discrete_sequence=['#10B981']
+                            )
+                            fig_hist_tp.update_layout(bargap=0.1)
+                            st.plotly_chart(fig_hist_tp, use_container_width=True)
+                        
+                        with col_graph4:
+                            # Boxplot TP
+                            fig_box_tp = px.box(
+                                tp_notes,
+                                title=f"Boxplot des notes TP",
+                                labels={'value': 'Note TP'}
+                            )
+                            st.plotly_chart(fig_box_tp, use_container_width=True)
+                        
+                        # Pie chart des catégories TP
+                        if 'Catégorie_TP' in df_groupe.columns:
+                            fig_pie_tp = px.pie(
+                                df_groupe,
+                                names='Catégorie_TP',
+                                title=f"Répartition par catégorie - TP",
+                                color_discrete_sequence=px.colors.sequential.Viridis
+                            )
+                            st.plotly_chart(fig_pie_tp, use_container_width=True)
         else:
             st.warning("Aucun groupe trouvé dans les données.")
     else:
         st.warning("La colonne 'GR' (groupe) n'existe pas dans les données.")
+
+# Footer informatif
+st.markdown("---")
+st.markdown("""
+    <div style="text-align: center; color: #6B7280; font-size: 0.9rem;">
+    <p>📚 <strong>Module de Probabilité - 2LM</strong> | Année Universitaire 2024-2025</p>
+    <p>⚠️ Les notes sont susceptibles d'être modifiées après délibération du jury</p>
+    </div>
+""", unsafe_allow_html=True)
